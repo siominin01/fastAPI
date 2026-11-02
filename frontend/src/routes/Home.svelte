@@ -13,9 +13,25 @@
     get_question_list()
 </script>
 
-<ul>
-    {#each question_list as question}
-        <li><a use:link href="/detail/{question.id}">{question.subject}</a></li>
-    {/each}
-    <!-- use:link 는 동일한 페이지라고 인식하기 때문에 서버로 페이지 요청을 보내지 않음 -->
-</ul>
+<div class="container my-3">
+    <table class="table">
+        <thead>
+            <tr class="table-dark">
+                <th>번 호</th>
+                <th>제 목</th>
+                <th>작 성 일 시</th>
+            </tr>
+        </thead>
+        <tbody>
+            {#each question_list as question, i}
+            <tr>
+                <td>{i+1}</td>
+                <td>
+                    <a use:link href="/detail/{question.id}">{question.subject}</a>
+                </td>
+                <td>{question.create_date}</td>
+            </tr>
+            {/each}
+        </tbody>
+    </table>
+</div>

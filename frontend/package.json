@@ -14,6 +14,7 @@
     "vite": "^8.3.0"
   },
   "dependencies": {
+    "bootstrap": "^5.3.8",
     "svelte-spa-router": "^3.3.0"
   }
 }
