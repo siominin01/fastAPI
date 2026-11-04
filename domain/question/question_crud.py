@@ -14,8 +14,8 @@ def get_question(db: Session, question_id: int):
     return question
 
 def create_question(db: Session, question_create: QuestionCreate):
-    db_question = Question(subject=question_create.subject,
-                           content=question_create.content,
-                           create_date=datetime.now())
+    db_question = Question(subject=question_create.subject, \
+                            content=question_create.content, \
+                            create_date=datetime.now())
     db.add(db_question)
     db.commit()
