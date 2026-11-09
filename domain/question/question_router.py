@@ -9,10 +9,14 @@ router = APIRouter(
     prefix="/api/question",
 )
 
-@router.get("/list", response_model=list[question_schema.Question])
-def question_list(db: Session = Depends(get_db)):
-    _question_list = question_crud.get_question_list(db)
-    return _question_list
+@router.get("/list", response_model=question_schema.QuestionList)
+# question_list 함수에 페이지 번호와 한 페이지에 보여줄 게시물 갯수인 page, size 매개변수를 추가
+def question_list(db: Session = Depends(get_db), page: int = 0, size: int = 10):
+    total, _question_list = question_crud.get_question_list(db, skip=page*size, limit=size)
+    return {
+        'total': total,
+        'question_list': _question_list
+    }
 
 @router.get("/detail/{question_id}", response_model=question_schema.Question)
 def question_detail(question_id: int, db: Session = Depends(get_db)):

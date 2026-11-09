@@ -20,7 +20,7 @@
             },
             (json_error) => { 
                 error = json_error
-            }
+            } 
         )
     }
 </script>
