@@ -1,3 +1,5 @@
+import qs from "qs"
+
 const fastapi = (operation, url, params, success_callback, failure_callback) => {
     let method = operation
     // get, post, put, delete 
@@ -5,6 +7,13 @@ const fastapi = (operation, url, params, success_callback, failure_callback) => 
     // 서버에 보내는 데이터의 형식이 JSON이라고 알려주기 위한 값
     let body = JSON.stringify(params)
     // 자바스크립트 객체를 JSON 문자열로 변환
+
+    if(operation === 'login') { 
+        // Content-Type: application/json
+        method = 'post'
+        content_type = 'application/x-www-form-urlencoded' 
+        body = qs.stringify(params)
+    }
 
     // let _url = 'http://127.0.0.1:8000'+url 
     let _url = import.meta.env.VITE_SERVER_URL+url
