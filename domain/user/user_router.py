@@ -2,8 +2,8 @@ from datetime import timedelta, datetime
 
 from fastapi import APIRouter, HTTPException
 from fastapi import Depends
-from fastapi.security import OAuth2PasswordRequestForm
-from jose import jwt
+from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
+from jose import jwt, JWTError
 from sqlalchemy.orm import Session
 from starlette import status
 
@@ -17,6 +17,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24
 SECRET_KEY = "0cc05c3f28a9377092c0fdfe1e0a6a86749d60625568a9d945f78fef260d3160"
 # JWT 서명 알고리즘 (HS256: HMAC-SHA256)
 ALGORITHM = "HS256"
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/user/login")
 
 # 사용자 관련 API의 공통 URL을 /api/user로 설정
 router = APIRouter(
@@ -108,3 +109,43 @@ def login_for_access_token(
         "token_type": "bearer",
         "username": user.username
     }
+
+# 현재 로그인한 사용자 정보를 조회하는 함수
+# HTTP 요청 헤더의 Bearer 토큰을 읽어 사용자 객체를 반환한다.
+def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+    # 1. 인증 실패 시 발생시킬 HTTP 401 예외 정의
+    # WWW-Authenticate: Bearer > Bearer 토큰 인증 방식 안내
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        # 2. JWT 토큰 검증 및 데이터 추출
+        # oauth2_scheme은 OAuth2PasswordBearer로 생성한 객체이다.
+        # Authorization 헤더의 bearer 토큰을 자동을 추출하여
+        # token 매개변수에 전달한다.
+        #
+        # OAuth2PasswordBearer(tokenUrl="/api/user/login")
+        # tokenUrl을 토큰을 발급받는 로그인 API의 URL을 의미한다.
+        #
+        # jwt.decode()는 SECRET_KEY와 ALGORITHM을 이용하여
+        # JWT의 서명과 만료 시간 등을 검증하고 payload를 추출한다.
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        # 3. JWTㅡ이 sub(Subject) 항목에서 사용자명 추출
+        username: str = payload.get("sub")
+        # 사용자명이 없으면 인증 실패
+        if username is None:
+            raise credentials_exception
+
+    # JWT가 만료되었거나 서명이 올바르지 앟은 경우 등
+    except JWTError:
+        raise credentials_exception
+    else:
+        # 4. JWT에서 추출한 사용자명으로 DB에서 사용자 조회
+        user = user_crud.get_user(db, username=username)
+        # 해당 사용자가 DB에 존재하지 않으면 인증 실패
+        if user is None:
+            raise credentials_exception
+        # 5. 인증에 성공하면 사용자 모델 객체 반환
+        return user

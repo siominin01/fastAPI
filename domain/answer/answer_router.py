@@ -5,6 +5,8 @@ from starlette import status
 from database import get_db
 from domain.answer import answer_schema, answer_crud
 from domain.question import question_crud
+from domain.user.user_router import get_current_user
+from models import User
 
 router = APIRouter(
     prefix="/api/answer",
@@ -17,7 +19,8 @@ router = APIRouter(
 #_answer_create: 사용자가 입력한 답변 데이터를 담는 매개변수
 def answer_create(question_id: int,
                     _answer_create: answer_schema.AnswerCreate,
-                    db: Session = Depends(get_db)):
+                    db: Session = Depends(get_db),
+                    current_user : User = Depends(get_current_user)):
 
     # create answer
     question = question_crud.get_question(db, question_id=question_id)
@@ -27,4 +30,5 @@ def answer_create(question_id: int,
     #왼쪽은 호출받는 함수의 매개변수 이름, 오른쪽은 조회한 질문 객체
     #왼쪽은 호출받는 함수의 매개변수 이름, 오른쪽은 현재 함수에서 전달받은 답변 데이터
     answer_crud.create_answer(db, question=question,
-                    answer_create=_answer_create)
+                    answer_create=_answer_create,
+                    user=current_user)
